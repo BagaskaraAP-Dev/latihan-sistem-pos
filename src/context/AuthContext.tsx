@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface UserAccount {
-  id: string;
+  id: number;
+  code: string;
   name: string;
   shortName: string;
   role: 'KASIR' | 'ADMIN';
@@ -17,27 +18,37 @@ export interface UserSession {
   clockOutTime: string | null;
 }
 
+export interface CashierInput {
+  code: string;
+  name: string;
+  shortName?: string;
+  role: 'KASIR' | 'ADMIN';
+  pin: string;
+  avatarUrl?: string | null;
+}
+
 interface AuthContextType {
   currentUser: UserAccount | null;
   session: UserSession | null;
   users: UserAccount[];
-  login: (userId: string, pin: string) => { success: boolean; message?: string };
+  isLoading: boolean;
+  login: (codeOrId: string, pin: string) => { success: boolean; message?: string };
   logout: () => void;
-  updateAvatar: (avatarBase64: string) => void;
+  updateAvatar: (avatarBase64: string) => Promise<{ success: boolean; error?: string }>;
   clockOut: () => string;
+  fetchUsers: () => Promise<void>;
+  addCashier: (data: CashierInput) => Promise<{ success: boolean; error?: string }>;
+  updateCashier: (id: number, data: Partial<CashierInput>) => Promise<{ success: boolean; error?: string }>;
+  deleteCashier: (id: number) => Promise<{ success: boolean; error?: string }>;
 }
 
-const DEFAULT_USERS: UserAccount[] = [
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Initial fallback only if database is offline during cold start
+const FALLBACK_USERS: UserAccount[] = [
   {
-    id: 'KSR-01',
-    name: 'Siti Aminah',
-    shortName: 'SITI A.',
-    role: 'KASIR',
-    pin: '1234',
-    avatarUrl: null,
-  },
-  {
-    id: 'ADM-01',
+    id: 1,
+    code: 'ADM-01',
     name: 'Bagaskara AP',
     shortName: 'BAGASKARA',
     role: 'ADMIN',
@@ -46,42 +57,95 @@ const DEFAULT_USERS: UserAccount[] = [
   },
 ];
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<UserAccount[]>(DEFAULT_USERS);
+  const [users, setUsers] = useState<UserAccount[]>(FALLBACK_USERS);
   const [session, setSession] = useState<UserSession | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load users and current session from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedUsers = localStorage.getItem('indo_pos_users');
-        if (storedUsers) {
-          setUsers(JSON.parse(storedUsers));
-        } else {
-          localStorage.setItem('indo_pos_users', JSON.stringify(DEFAULT_USERS));
-        }
+  // Helper to map DB row to UserAccount
+  const mapCashierRow = (row: any): UserAccount => ({
+    id: Number(row.id),
+    code: String(row.code),
+    name: String(row.name),
+    shortName: String(row.short_name || row.name),
+    role: row.role === 'ADMIN' ? 'ADMIN' : 'KASIR',
+    pin: String(row.pin || '1234'),
+    avatarUrl: row.avatar_url || null,
+  });
 
-        const storedSession = localStorage.getItem('indo_pos_session');
-        if (storedSession) {
-          setSession(JSON.parse(storedSession));
+  // Fetch cashiers from database API
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/cashiers', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(mapCashierRow);
+          setUsers(mapped);
+
+          // Purge stale or legacy 'Siti Aminah' from localStorage
+          if (typeof window !== 'undefined') {
+            const rawSession = localStorage.getItem('indo_pos_session');
+            if (rawSession) {
+              try {
+                const parsed = JSON.parse(rawSession);
+                if (parsed?.user?.name === 'Siti Aminah' || parsed?.user?.code === 'KSR-01') {
+                  localStorage.removeItem('indo_pos_session');
+                  setSession(null);
+                } else {
+                  // Keep session user synchronized with latest database row
+                  const matched = mapped.find(
+                    (u) => u.id === parsed?.user?.id || u.code === parsed?.user?.code
+                  );
+                  if (matched) {
+                    const refreshedSession: UserSession = {
+                      ...parsed,
+                      user: matched,
+                    };
+                    setSession(refreshedSession);
+                    localStorage.setItem('indo_pos_session', JSON.stringify(refreshedSession));
+                  } else {
+                    localStorage.removeItem('indo_pos_session');
+                    setSession(null);
+                  }
+                }
+              } catch (e) {
+                localStorage.removeItem('indo_pos_session');
+                setSession(null);
+              }
+            }
+          }
         }
-      } catch (err) {
-        console.error('Failed to load auth from localStorage:', err);
-      } finally {
-        setIsLoaded(true);
       }
+    } catch (err) {
+      console.error('Failed to fetch cashiers from API:', err);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const saveUsers = (updatedUsers: UserAccount[]) => {
-    setUsers(updatedUsers);
+  // Initial load
+  useEffect(() => {
+    // Purge any legacy localStorage items referencing 'Siti Aminah'
     if (typeof window !== 'undefined') {
-      localStorage.setItem('indo_pos_users', JSON.stringify(updatedUsers));
+      try {
+        const storedUsersRaw = localStorage.getItem('indo_pos_users');
+        if (storedUsersRaw && storedUsersRaw.includes('Siti Aminah')) {
+          localStorage.removeItem('indo_pos_users');
+        }
+        const storedSessionRaw = localStorage.getItem('indo_pos_session');
+        if (storedSessionRaw && storedSessionRaw.includes('Siti Aminah')) {
+          localStorage.removeItem('indo_pos_session');
+        } else if (storedSessionRaw) {
+          setSession(JSON.parse(storedSessionRaw));
+        }
+      } catch (e) {
+        console.error('Error reading localStorage session:', e);
+      }
     }
-  };
+
+    fetchUsers();
+  }, [fetchUsers]);
 
   const saveSession = (newSession: UserSession | null) => {
     setSession(newSession);
@@ -94,14 +158,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = (userId: string, pin: string): { success: boolean; message?: string } => {
-    const targetUser = users.find((u) => u.id === userId);
+  const login = (codeOrId: string, pin: string): { success: boolean; message?: string } => {
+    const targetUser = users.find(
+      (u) =>
+        u.code.toUpperCase() === codeOrId.trim().toUpperCase() ||
+        String(u.id) === codeOrId.trim()
+    );
+
     if (!targetUser) {
-      return { success: false, message: 'ID Pengguna tidak terdaftar dalam sistem.' };
+      return { success: false, message: 'Akun petugas tidak terdaftar dalam sistem.' };
     }
 
-    if (targetUser.pin !== pin) {
-      return { success: false, message: 'PIN yang dimasukkan salah.' };
+    if (targetUser.pin !== pin.trim()) {
+      return { success: false, message: 'PIN keamanan yang dimasukkan salah.' };
     }
 
     const now = new Date();
@@ -122,22 +191,118 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveSession(null);
   };
 
-  const updateAvatar = (avatarBase64: string) => {
-    if (!session) return;
+  const updateAvatar = async (avatarBase64: string): Promise<{ success: boolean; error?: string }> => {
+    if (!session?.user?.id) {
+      return { success: false, error: 'Tidak ada sesi pengguna aktif' };
+    }
 
-    const updatedUser: UserAccount = {
-      ...session.user,
-      avatarUrl: avatarBase64,
-    };
+    try {
+      const res = await fetch(`/api/cashiers/${session.user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar_url: avatarBase64 || null }),
+      });
 
-    const updatedUsers = users.map((u) => (u.id === updatedUser.id ? updatedUser : u));
-    saveUsers(updatedUsers);
+      if (!res.ok) {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Gagal menyimpan foto profil' };
+      }
 
-    const updatedSession: UserSession = {
-      ...session,
-      user: updatedUser,
-    };
-    saveSession(updatedSession);
+      const updatedRow = await res.json();
+      const updatedUser = mapCashierRow(updatedRow);
+
+      setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+      const updatedSession: UserSession = {
+        ...session,
+        user: updatedUser,
+      };
+      saveSession(updatedSession);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Gagal menghubungi server' };
+    }
+  };
+
+  const addCashier = async (data: CashierInput): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch('/api/cashiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        return { success: false, error: errData.error || 'Gagal menambahkan kasir' };
+      }
+
+      const created = await res.json();
+      const mapped = mapCashierRow(created);
+      setUsers((prev) => [...prev, mapped]);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Gagal menghubungi server' };
+    }
+  };
+
+  const updateCashier = async (
+    id: number,
+    data: Partial<CashierInput>
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch(`/api/cashiers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        return { success: false, error: errData.error || 'Gagal memperbarui kasir' };
+      }
+
+      const updatedRow = await res.json();
+      const updatedUser = mapCashierRow(updatedRow);
+
+      setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+
+      // If updating currently logged in user, refresh current session
+      if (session?.user?.id === id) {
+        const updatedSession: UserSession = {
+          ...session,
+          user: updatedUser,
+        };
+        saveSession(updatedSession);
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Gagal menghubungi server' };
+    }
+  };
+
+  const deleteCashier = async (id: number): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch(`/api/cashiers/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        return { success: false, error: errData.error || 'Gagal menghapus kasir' };
+      }
+
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+
+      // If user deleted themselves, logout
+      if (session?.user?.id === id) {
+        logout();
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Gagal menghubungi server' };
+    }
   };
 
   const clockOut = (): string => {
@@ -162,13 +327,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         currentUser: session?.user || null,
         session,
         users,
+        isLoading,
         login,
         logout,
         updateAvatar,
         clockOut,
+        fetchUsers,
+        addCashier,
+        updateCashier,
+        deleteCashier,
       }}
     >
-      {isLoaded ? children : null}
+      {children}
     </AuthContext.Provider>
   );
 }

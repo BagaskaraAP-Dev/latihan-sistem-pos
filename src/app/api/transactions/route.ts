@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     const randPart = Math.random().toString(36).substring(2, 7).toUpperCase();
     const invoiceNo = `INV-${dateStr}-${randPart}`;
 
-    const finalCashierName = (cashier_name || 'Siti Aminah').trim();
+    const finalCashierName = (cashier_name || 'Kasir').trim();
 
     const txRes = await client.query(
       `INSERT INTO transactions (invoice_no, cashier_name, total_amount, payment_method, cash_received, change_amount)

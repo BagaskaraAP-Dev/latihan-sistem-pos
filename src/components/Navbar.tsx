@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Search, User, Camera, Clock, CheckCircle2, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
+import { Search, User, Camera, Clock, CheckCircle2, LogOut, ShieldCheck, UserCheck, Users } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -31,6 +31,7 @@ export default function Navbar() {
     { name: 'Kasir Utama', href: '/' },
     { name: 'Stok Barang', href: '/products' },
     { name: 'Rekap Laporan', href: '/reports' },
+    { name: 'Kelola Kasir', href: '/cashiers' },
   ];
 
   // Close profile dropdown on outside click
@@ -335,6 +336,15 @@ export default function Navbar() {
 
               {/* Attendance & Account Actions */}
               <div className="mt-4 space-y-2">
+                <Link
+                  href="/cashiers"
+                  onClick={() => setProfileOpen(false)}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Kelola Akun Kasir</span>
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleClockOut}

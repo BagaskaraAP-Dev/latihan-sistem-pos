@@ -43,17 +43,45 @@ export async function initDb(): Promise<void> {
         CREATE TABLE IF NOT EXISTS transactions (
           id SERIAL PRIMARY KEY,
           invoice_no VARCHAR(50) UNIQUE NOT NULL,
-          cashier_name VARCHAR(100) DEFAULT 'Siti Aminah',
+          cashier_name VARCHAR(100) DEFAULT 'Kasir',
           total_amount NUMERIC(12, 2) NOT NULL,
           payment_method VARCHAR(20) NOT NULL,
           cash_received NUMERIC(12, 2) DEFAULT 0,
           change_amount NUMERIC(12, 2) DEFAULT 0,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
-        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS cashier_name VARCHAR(100) DEFAULT 'Siti Aminah';
+        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS cashier_name VARCHAR(100) DEFAULT 'Kasir';
+        ALTER TABLE transactions ALTER COLUMN cashier_name SET DEFAULT 'Kasir';
+        UPDATE transactions SET cashier_name = 'Bagaskara AP' WHERE cashier_name = 'Siti Aminah';
       `);
 
-      // 3. Create Transaction Items Table
+      // 3. Create Cashiers Table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS cashiers (
+          id SERIAL PRIMARY KEY,
+          code VARCHAR(50) UNIQUE NOT NULL,
+          name VARCHAR(100) NOT NULL,
+          short_name VARCHAR(50) NOT NULL,
+          role VARCHAR(20) NOT NULL DEFAULT 'KASIR',
+          pin VARCHAR(20) NOT NULL DEFAULT '1234',
+          avatar_url TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Seed initial cashier/admin if cashiers table is empty
+      const cashierCountRes = await client.query('SELECT COUNT(*) FROM cashiers');
+      const cashierCount = parseInt(cashierCountRes.rows[0].count, 10);
+      if (cashierCount === 0) {
+        await client.query(`
+          INSERT INTO cashiers (code, name, short_name, role, pin, avatar_url)
+          VALUES ('ADM-01', 'Bagaskara AP', 'BAGASKARA', 'ADMIN', '1234', NULL)
+          ON CONFLICT (code) DO NOTHING;
+        `);
+      }
+
+      // 4. Create Transaction Items Table
       await client.query(`
         CREATE TABLE IF NOT EXISTS transaction_items (
           id SERIAL PRIMARY KEY,
@@ -67,7 +95,7 @@ export async function initDb(): Promise<void> {
         );
       `);
 
-      // 4. Auto-seeding if products table is empty
+      // 5. Auto-seeding if products table is empty
       const countRes = await client.query('SELECT COUNT(*) FROM products');
       const count = parseInt(countRes.rows[0].count, 10);
 

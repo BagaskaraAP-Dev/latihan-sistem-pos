@@ -283,7 +283,7 @@ export default function CashierPage() {
     try {
       setIsProcessing(true);
       const payload = {
-        cashier_name: currentUser?.name || 'Siti Aminah',
+        cashier_name: currentUser?.name || 'Kasir',
         payment_method: paymentMethod,
         cash_received: paymentMethod === 'CASH' ? numericCash : totalAmount,
         items: cart.map((i) => ({

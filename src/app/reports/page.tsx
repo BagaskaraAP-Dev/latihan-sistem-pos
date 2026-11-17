@@ -213,7 +213,7 @@ export default function ReportsPage() {
                       >
                         <td className="py-3.5 px-4">
                           <span className="font-mono font-bold text-blue-600 block">{tx.invoice_no}</span>
-                          <span className="text-[11px] text-slate-500 font-medium">Kasir: {tx.cashier_name || 'Siti Aminah'}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">Kasir: {tx.cashier_name || 'Kasir'}</span>
                         </td>
                         <td className="py-3.5 px-4 text-slate-500 text-xs">
                           {formatDateTime(tx.created_at)}
