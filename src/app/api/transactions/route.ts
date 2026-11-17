@@ -9,6 +9,7 @@ export async function GET() {
       SELECT 
         t.id, 
         t.invoice_no, 
+        t.cashier_name,
         t.total_amount, 
         t.payment_method, 
         t.cash_received, 
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
   const client = await getClient();
   try {
     const body = await req.json();
-    const { items, payment_method, cash_received } = body;
+    const { items, payment_method, cash_received, cashier_name } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Keranjang belanja tidak boleh kosong' }, { status: 400 });
@@ -133,11 +134,13 @@ export async function POST(req: NextRequest) {
     const randPart = Math.random().toString(36).substring(2, 7).toUpperCase();
     const invoiceNo = `INV-${dateStr}-${randPart}`;
 
+    const finalCashierName = (cashier_name || 'Siti Aminah').trim();
+
     const txRes = await client.query(
-      `INSERT INTO transactions (invoice_no, total_amount, payment_method, cash_received, change_amount)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, invoice_no, total_amount, payment_method, cash_received, change_amount, created_at`,
-      [invoiceNo, totalAmount, payment_method, finalCashReceived, finalChange]
+      `INSERT INTO transactions (invoice_no, cashier_name, total_amount, payment_method, cash_received, change_amount)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, invoice_no, cashier_name, total_amount, payment_method, cash_received, change_amount, created_at`,
+      [invoiceNo, finalCashierName, totalAmount, payment_method, finalCashReceived, finalChange]
     );
 
     const transaction = txRes.rows[0];

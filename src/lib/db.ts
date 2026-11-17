@@ -43,12 +43,14 @@ export async function initDb(): Promise<void> {
         CREATE TABLE IF NOT EXISTS transactions (
           id SERIAL PRIMARY KEY,
           invoice_no VARCHAR(50) UNIQUE NOT NULL,
+          cashier_name VARCHAR(100) DEFAULT 'Siti Aminah',
           total_amount NUMERIC(12, 2) NOT NULL,
           payment_method VARCHAR(20) NOT NULL,
           cash_received NUMERIC(12, 2) DEFAULT 0,
           change_amount NUMERIC(12, 2) DEFAULT 0,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS cashier_name VARCHAR(100) DEFAULT 'Siti Aminah';
       `);
 
       // 3. Create Transaction Items Table

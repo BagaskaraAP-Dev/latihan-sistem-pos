@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import './globals.css';
-import Navbar from '@/components/Navbar';
+import { AuthProvider } from '@/context/AuthContext';
+import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
   title: 'INDO POS - Minimarket & Ritel',
@@ -16,10 +16,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className="bg-[#f1f5f9] text-slate-900 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
-        <Suspense fallback={null}>
-          <Navbar />
-        </Suspense>
-        <main className="flex-1 flex flex-col">{children}</main>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   );

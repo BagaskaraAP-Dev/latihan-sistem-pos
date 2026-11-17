@@ -29,6 +29,7 @@ export interface TransactionItem {
 export interface Transaction {
   id: number;
   invoice_no: string;
+  cashier_name?: string;
   total_amount: number;
   payment_method: 'CASH' | 'QRIS';
   cash_received: number;

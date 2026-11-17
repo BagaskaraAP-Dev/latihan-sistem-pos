@@ -6,6 +6,7 @@ import { formatRupiah } from '@/lib/format';
 import ProductIcon from '@/components/ProductIcon';
 import ReceiptModal from '@/components/ReceiptModal';
 import ProductFormModal from '@/components/ProductFormModal';
+import { useAuth } from '@/context/AuthContext';
 import {
   QrCode,
   Plus,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function CashierPage() {
+  const { currentUser } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -281,6 +283,7 @@ export default function CashierPage() {
     try {
       setIsProcessing(true);
       const payload = {
+        cashier_name: currentUser?.name || 'Siti Aminah',
         payment_method: paymentMethod,
         cash_received: paymentMethod === 'CASH' ? numericCash : totalAmount,
         items: cart.map((i) => ({

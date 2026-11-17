@@ -63,7 +63,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               </div>
               <div className="flex justify-between">
                 <span>KASIR:</span>
-                <span>01/SITI AMINAH (SHIFT 1)</span>
+                <span>{transaction.cashier_name ? transaction.cashier_name.toUpperCase() : '01/SITI AMINAH (SHIFT 1)'}</span>
               </div>
             </div>
 

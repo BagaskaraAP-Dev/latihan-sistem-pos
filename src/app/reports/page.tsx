@@ -211,8 +211,9 @@ export default function ReportsPage() {
                         onClick={() => toggleExpand(tx.id)}
                         className="hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        <td className="py-3.5 px-4 font-mono font-bold text-blue-600">
-                          {tx.invoice_no}
+                        <td className="py-3.5 px-4">
+                          <span className="font-mono font-bold text-blue-600 block">{tx.invoice_no}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">Kasir: {tx.cashier_name || 'Siti Aminah'}</span>
                         </td>
                         <td className="py-3.5 px-4 text-slate-500 text-xs">
                           {formatDateTime(tx.created_at)}
