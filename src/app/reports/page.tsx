@@ -70,51 +70,49 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
-      {/* Header Card */}
-      <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-[1600px] mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold">
               <FileText className="w-5 h-5" />
             </span>
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Rekap Laporan Penjualan
+              Laporan Penjualan
             </h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Analisis penerimaan kasir, total omzet, laba kotor, dan riwayat transaksi gerai.
+            Rekap omzet, perkiraan laba kotor, dan riwayat transaksi kasir.
           </p>
         </div>
 
         <button
           type="button"
           onClick={fetchData}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200"
+          className="flex items-center justify-center gap-2 px-5 py-3 min-h-[44px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           <span>Perbarui Data</span>
         </button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-200/80">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
-            <span>Total Omzet Penjualan</span>
+            <span>Total Omzet</span>
             <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-3xl font-black text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               {formatRupiah(summary.totalRevenue)}
             </span>
-            <p className="text-xs text-slate-400 mt-1">Akumulasi seluruh transaksi selesai</p>
+            <p className="text-xs text-slate-400 mt-1">Akumulasi transaksi selesai</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-200/80">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Struk Transaksi</span>
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -122,14 +120,14 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-3xl font-black text-indigo-600 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-black text-indigo-600 tracking-tight">
               {summary.totalTransactions} Struk
             </span>
             <p className="text-xs text-slate-400 mt-1">Total nota kasir tercatat</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-xs border border-slate-200/80">
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-slate-200/80">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Estimasi Laba Kotor</span>
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -137,16 +135,15 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-3xl font-black text-emerald-600 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">
               {formatRupiah(summary.estimatedProfit)}
             </span>
-            <p className="text-xs text-slate-400 mt-1">Margin Kotor (Harga Jual - Modal)</p>
+            <p className="text-xs text-slate-400 mt-1">Harga jual dikurangi modal</p>
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-3xl p-4 shadow-xs border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-center justify-between">
+      <div className="bg-white rounded-3xl p-3 sm:p-4 shadow-xs border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -154,17 +151,17 @@ export default function ReportsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nomor nota struk..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-full text-xs sm:text-sm text-slate-900 focus:outline-none focus:bg-white"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-full text-xs sm:text-sm text-slate-900 focus:outline-none focus:bg-white min-h-[40px]"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
           {(['ALL', 'CASH', 'QRIS'] as const).map((method) => (
             <button
               key={method}
               type="button"
               onClick={() => setFilterMethod(method)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition-all ${
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition-all min-h-[40px] whitespace-nowrap ${
                 filterMethod === method
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
@@ -176,17 +173,16 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Transactions Table */}
       <div className="bg-white rounded-3xl shadow-xs border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-slate-50 text-slate-600 font-extrabold text-xs uppercase border-b border-slate-200">
               <tr>
-                <th className="py-4 px-4">No. Struk Invoice</th>
-                <th className="py-4 px-4">Tanggal &amp; Waktu</th>
-                <th className="py-4 px-4">Metode Bayar</th>
-                <th className="py-4 px-4 text-right">Total Transaksi</th>
-                <th className="py-4 px-4 text-center">Rincian Barang</th>
+                <th className="py-3.5 px-4">No. Struk Invoice</th>
+                <th className="py-3.5 px-4">Tanggal &amp; Waktu</th>
+                <th className="py-3.5 px-4">Metode Bayar</th>
+                <th className="py-3.5 px-4 text-right">Total Transaksi</th>
+                <th className="py-3.5 px-4 text-center">Rincian Barang</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-800">

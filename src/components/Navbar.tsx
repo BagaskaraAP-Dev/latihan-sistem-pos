@@ -4,7 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Search, User, Camera, Clock, CheckCircle2, LogOut, ShieldCheck, UserCheck, Users } from 'lucide-react';
+import {
+  Search,
+  User,
+  Camera,
+  Clock,
+  LogOut,
+  Users,
+  ShoppingBag,
+  Package,
+  FileText,
+} from 'lucide-react';
+
+const NAV_ITEMS = [
+  { name: 'Kasir Utama', shortName: 'Kasir', href: '/', icon: ShoppingBag },
+  { name: 'Stok Barang', shortName: 'Stok', href: '/products', icon: Package },
+  { name: 'Rekap Laporan', shortName: 'Laporan', href: '/reports', icon: FileText },
+  { name: 'Kelola Kasir', shortName: 'Petugas', href: '/cashiers', icon: Users },
+];
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,7 +37,6 @@ export default function Navbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync initial search from query param on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -29,14 +45,6 @@ export default function Navbar() {
     }
   }, []);
 
-  const navItems = [
-    { name: 'Kasir Utama', href: '/' },
-    { name: 'Stok Barang', href: '/products' },
-    { name: 'Rekap Laporan', href: '/reports' },
-    { name: 'Kelola Kasir', href: '/cashiers' },
-  ];
-
-  // Close profile dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -47,7 +55,6 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Focus search input when requested (e.g. F2 shortcut)
   useEffect(() => {
     const handleFocusSearch = () => {
       if (searchInputRef.current) {
@@ -57,7 +64,6 @@ export default function Navbar() {
     };
     window.addEventListener('pos-focus-search', handleFocusSearch);
 
-    // Listen to clear search event after scan
     const handleClearSearch = () => {
       setSearchVal('');
       if (searchInputRef.current) {
@@ -66,7 +72,6 @@ export default function Navbar() {
     };
     window.addEventListener('pos-scan-clear', handleClearSearch);
 
-    // Keyboard global shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F2') {
         e.preventDefault();
@@ -91,7 +96,6 @@ export default function Navbar() {
     if (pathname !== '/') {
       router.push(`/?q=${encodeURIComponent(queryStr)}`);
     } else {
-      // Dispatch submit event for barcode/SKU scanner processing
       window.dispatchEvent(new CustomEvent('pos-scan-submit', { detail: queryStr }));
     }
   };
@@ -103,13 +107,12 @@ export default function Navbar() {
     }
   };
 
-  // Real profile image upload & optimization handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Format file tidak didukung. Harap pilih gambar (JPG, PNG, atau WEBP).');
+      alert('Format berkas harus berupa gambar JPG, PNG, atau WEBP.');
       if (e.target) e.target.value = '';
       return;
     }
@@ -122,7 +125,6 @@ export default function Navbar() {
       const img = new Image();
       img.onload = async () => {
         try {
-          // Resize to 300x300 for crisp quality and minimal storage footprint
           const canvas = document.createElement('canvas');
           const maxDim = 300;
           let width = img.width;
@@ -164,7 +166,7 @@ export default function Navbar() {
       };
       img.onerror = () => {
         setIsUploadingAvatar(false);
-        setAvatarFeedback('Gagal membaca berkas gambar');
+        setAvatarFeedback('Gagal membaca gambar');
         setTimeout(() => setAvatarFeedback(null), 3000);
         if (fileInputRef.current) fileInputRef.current.value = '';
       };
@@ -204,214 +206,229 @@ export default function Navbar() {
   const isAdmin = currentUser?.role === 'ADMIN';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#0b1120] text-slate-100 shadow-md">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between gap-4">
-        {/* Brand & Search Bar */}
-        <div className="flex items-center gap-6 flex-1 max-w-2xl">
-          <Link href="/" className="flex flex-col flex-shrink-0">
-            <span className="text-xl font-black tracking-tight text-white leading-none">
-              INDO POS
-            </span>
-            <span className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">
-              Minimarket &amp; Ritel
-            </span>
-          </Link>
+    <>
+      <header className="sticky top-0 z-40 w-full bg-[#0b1120] text-slate-100 shadow-md">
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0 max-w-2xl">
+            <Link href="/" className="flex flex-col flex-shrink-0">
+              <span className="text-lg sm:text-xl font-black tracking-tight text-white leading-none">
+                INDO POS
+              </span>
+              <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">
+                Minimarket &amp; Ritel
+              </span>
+            </Link>
 
-          {/* Search Box in Header */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <form onSubmit={handleSearchSubmit} className="flex-1 min-w-0 relative">
+              <Search className="w-3.5 sm:w-4 h-3.5 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchVal}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Scan Barcode / SKU (F2)"
+                className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 bg-[#cbd5e1] hover:bg-slate-200 focus:bg-white text-slate-900 placeholder-slate-600 rounded-full text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner truncate"
+              />
+            </form>
+          </div>
+
+          <nav aria-label="Navigasi Desktop" className="hidden md:flex items-center gap-1 sm:gap-2">
+            {NAV_ITEMS.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-3.5 py-2 rounded-full text-xs lg:text-sm font-semibold transition-all min-h-[44px] flex items-center ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="relative flex-shrink-0" ref={profileRef}>
             <input
-              ref={searchInputRef}
-              type="text"
-              value={searchVal}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Scan Barcode / Ketik SKU / Nama Barang... (F2)"
-              className="w-full pl-10 pr-4 py-2 bg-[#cbd5e1] hover:bg-slate-200 focus:bg-white text-slate-900 placeholder-slate-600 rounded-full text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
             />
-          </form>
-        </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 sm:gap-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                }`}
-              >
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+            <button
+              type="button"
+              onClick={() => setProfileOpen((prev) => !prev)}
+              className="flex items-center gap-2 p-1 sm:p-1.5 rounded-xl hover:bg-slate-800 transition-colors focus:outline-none min-h-[44px]"
+              title="Profil Pengguna"
+            >
+              <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden border border-slate-300 flex-shrink-0">
+                {currentUser?.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-slate-700" />
+                )}
+              </div>
+              <span className="hidden sm:inline text-xs font-bold text-slate-300 uppercase tracking-wider">
+                {currentUser?.shortName || 'KASIR'}
+              </span>
+            </button>
 
-        {/* User Profile Avatar & Popover */}
-        <div className="relative" ref={profileRef}>
-          {/* Hidden File Input for Avatar Upload */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          <button
-            type="button"
-            onClick={() => setProfileOpen((prev) => !prev)}
-            className="flex flex-col items-center justify-center p-1 rounded-lg hover:bg-slate-800 transition-colors focus:outline-none"
-            title="Profil Pengguna"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden border border-slate-300">
-              {currentUser?.avatarUrl ? (
-                <img
-                  src={currentUser.avatarUrl}
-                  alt={currentUser.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-4 h-4 text-slate-700" />
-              )}
-            </div>
-            <span className="text-[10px] font-bold text-slate-300 mt-0.5 uppercase tracking-wider">
-              {currentUser?.shortName || 'PENGGUNA'}
-            </span>
-          </button>
-
-          {/* Profile Popover Matching referensi.jpeg with Live Photo Upload */}
-          {profileOpen && (
-            <div className="absolute right-0 top-12 w-84 bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-6 z-50 animate-in fade-in zoom-in-95">
-              {/* Avatar with Camera Button */}
-              <div className="flex flex-col items-center text-center">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-500 shadow-inner overflow-hidden">
-                    {currentUser?.avatarUrl ? (
-                      <img
-                        src={currentUser.avatarUrl}
-                        alt={currentUser.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-12 h-12 stroke-[1.5] text-slate-400" />
-                    )}
+            {profileOpen && (
+              <div className="absolute right-0 top-12 w-80 sm:w-84 bg-white text-slate-900 rounded-3xl shadow-2xl border border-slate-200 p-5 sm:p-6 z-50 animate-in fade-in zoom-in-95">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-500 shadow-inner overflow-hidden">
+                      {currentUser?.avatarUrl ? (
+                        <img
+                          src={currentUser.avatarUrl}
+                          alt={currentUser.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-10 h-10 sm:w-12 sm:h-12 stroke-[1.5] text-slate-400" />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md hover:bg-blue-500 transition-colors border-2 border-white"
+                      title="Upload Foto Baru"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md hover:bg-blue-500 transition-colors border-2 border-white"
-                    title="Upload Foto Baru"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </button>
-                </div>
 
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    type="button"
-                    disabled={isUploadingAvatar}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-bold underline disabled:opacity-50"
-                  >
-                    {isUploadingAvatar ? 'Mengunggah...' : 'Ganti Foto Profil'}
-                  </button>
-                  {currentUser?.avatarUrl && (
+                  <div className="flex items-center gap-2 mt-2">
                     <button
                       type="button"
                       disabled={isUploadingAvatar}
-                      onClick={handleRemoveAvatar}
-                      className="text-xs text-rose-500 hover:text-rose-600 font-semibold disabled:opacity-50"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-bold underline disabled:opacity-50 py-1"
                     >
-                      Hapus
+                      {isUploadingAvatar ? 'Mengunggah...' : 'Ganti Foto Profil'}
                     </button>
+                    {currentUser?.avatarUrl && (
+                      <button
+                        type="button"
+                        disabled={isUploadingAvatar}
+                        onClick={handleRemoveAvatar}
+                        className="text-xs text-rose-500 hover:text-rose-600 font-semibold disabled:opacity-50 py-1"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+
+                  {avatarFeedback && (
+                    <div className="mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                      {avatarFeedback}
+                    </div>
                   )}
+
+                  <div className="mt-2">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <h3 className="text-base font-extrabold text-slate-900">{currentUser?.name}</h3>
+                      <span
+                        className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          isAdmin
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300'
+                        }`}
+                      >
+                        {currentUser?.role}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                      Kode: {currentUser?.code}
+                    </p>
+                  </div>
                 </div>
 
-                {avatarFeedback && (
-                  <div className="mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 animate-in fade-in">
-                    {avatarFeedback}
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
+                  <div className="bg-slate-100/90 rounded-2xl p-2.5 sm:p-3 text-center border border-slate-200/60">
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 font-semibold">Jam Masuk</p>
+                    <p className="text-xs font-extrabold text-slate-900 mt-0.5 font-mono">
+                      {session?.loginTime || '08:00 WIB'}
+                    </p>
+                  </div>
+                  <div className="bg-slate-100/90 rounded-2xl p-2.5 sm:p-3 text-center border border-slate-200/60">
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 font-semibold">Jam Keluar</p>
+                    <p className="text-xs font-extrabold text-slate-900 mt-0.5 font-mono">
+                      {session?.clockOutTime || '16:00 WIB'}
+                    </p>
+                  </div>
+                </div>
+
+                {clockOutMessage && (
+                  <div className="mt-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded-xl text-center">
+                    {clockOutMessage}
                   </div>
                 )}
 
-                <div className="mt-2">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <h3 className="text-base font-extrabold text-slate-900">{currentUser?.name}</h3>
-                    <span
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        isAdmin
-                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                          : 'bg-blue-100 text-blue-800 border border-blue-300'
-                      }`}
-                    >
-                      {currentUser?.role}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">
-                    ID Akun: {currentUser?.id}
-                  </p>
+                <div className="mt-4 space-y-2">
+                  <Link
+                    href="/cashiers"
+                    onClick={() => setProfileOpen(false)}
+                    className="w-full py-2.5 rounded-xl font-bold text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
+                  >
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <span>Kelola Akun Kasir</span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleClockOut}
+                    className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-1.5 min-h-[44px]"
+                  >
+                    <Clock className="w-4 h-4 text-slate-600" />
+                    <span>Catat Jam Keluar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5 min-h-[44px]"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Keluar &amp; Ganti Pengguna</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Attendance Shift Boxes */}
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="bg-slate-100/90 rounded-2xl p-3 text-center border border-slate-200/60">
-                  <p className="text-[11px] text-slate-500 font-semibold">Jam Masuk</p>
-                  <p className="text-xs font-extrabold text-slate-900 mt-0.5 font-mono">
-                    {session?.loginTime || '08:00 WIB'}
-                  </p>
-                </div>
-                <div className="bg-slate-100/90 rounded-2xl p-3 text-center border border-slate-200/60">
-                  <p className="text-[11px] text-slate-500 font-semibold">Jam Keluar</p>
-                  <p className="text-xs font-extrabold text-slate-900 mt-0.5 font-mono">
-                    {session?.clockOutTime || '16:00 WIB'}
-                  </p>
-                </div>
-              </div>
-
-              {clockOutMessage && (
-                <div className="mt-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded-xl text-center">
-                  {clockOutMessage}
-                </div>
-              )}
-
-              {/* Attendance & Account Actions */}
-              <div className="mt-4 space-y-2">
-                <Link
-                  href="/cashiers"
-                  onClick={() => setProfileOpen(false)}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Users className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Kelola Akun Kasir</span>
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleClockOut}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Clock className="w-3.5 h-3.5 text-slate-600" />
-                  <span>Catat Jam Keluar</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-rose-600 hover:bg-rose-500 text-white transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Keluar &amp; Ganti Pengguna</span>
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <nav
+        aria-label="Navigasi Utama Ponsel"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0b1120] border-t border-slate-800 flex items-center justify-around h-16 px-1 shadow-2xl safe-area-inset-bottom"
+      >
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center h-full min-h-[48px] py-1 transition-colors ${
+                isActive ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Icon className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px] tracking-tight">{item.shortName}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }

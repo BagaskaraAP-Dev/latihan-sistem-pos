@@ -26,7 +26,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <Navbar />
       </Suspense>
-      <main className="flex-1 flex flex-col">{children}</main>
+      <main className="flex-1 flex flex-col pb-20 md:pb-0">{children}</main>
     </div>
   );
 }

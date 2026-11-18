@@ -303,8 +303,7 @@ export default function LoginScreen() {
 
   return (
     <div className="fixed inset-0 z-50 bg-[#090d16] text-slate-100 flex flex-col justify-between select-none overflow-y-auto">
-      {/* Top Header */}
-      <header className="px-6 sm:px-8 py-4 border-b border-slate-800/80 bg-[#0d1322] flex items-center justify-between flex-shrink-0">
+      <header className="px-4 sm:px-8 py-3.5 border-b border-slate-800/80 bg-[#0d1322] flex items-center justify-between gap-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white text-base shadow-md shadow-blue-500/20">
             IP
@@ -312,12 +311,12 @@ export default function LoginScreen() {
           <div>
             <h1 className="text-lg font-black tracking-tight text-white leading-none">INDO POS</h1>
             <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-              Terminal Masuk Gerai &bull; Autentikasi Kredensial
+              Sistem Kasir Minimarket
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700/60 text-slate-300 text-xs font-mono">
+        <div className="hidden sm:flex items-center gap-2 bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700/60 text-slate-300 text-xs font-mono">
           <Clock className="w-4 h-4 text-blue-400" />
           <span>{currentTime || 'Memuat waktu...'}</span>
         </div>
@@ -481,14 +480,13 @@ export default function LoginScreen() {
             )}
           </div>
 
-          {/* Touch / Click Numpad */}
-          <div className="grid grid-cols-3 gap-2.5 max-w-xs mx-auto">
+          <div className="grid grid-cols-3 gap-2.5 max-w-xs mx-auto w-full">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
               <button
                 key={digit}
                 type="button"
                 onClick={() => handleNumpad(digit)}
-                className="py-3 bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-white font-mono font-black text-lg rounded-xl border border-slate-700/60 transition-all shadow-xs"
+                className="py-3 min-h-[48px] bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-white font-mono font-black text-lg rounded-xl border border-slate-700/60 transition-all shadow-xs flex items-center justify-center"
               >
                 {digit}
               </button>
@@ -496,34 +494,33 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={handleClear}
-              className="py-3 bg-slate-850 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 transition-all"
+              className="py-3 min-h-[48px] bg-slate-850 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 transition-all flex items-center justify-center"
             >
               Hapus
             </button>
             <button
               type="button"
               onClick={() => handleNumpad('0')}
-              className="py-3 bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-white font-mono font-black text-lg rounded-xl border border-slate-700/60 transition-all shadow-xs"
+              className="py-3 min-h-[48px] bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-white font-mono font-black text-lg rounded-xl border border-slate-700/60 transition-all shadow-xs flex items-center justify-center"
             >
               0
             </button>
             <button
               type="button"
               onClick={handleBackspace}
-              className="py-3 bg-slate-850 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-white flex items-center justify-center rounded-xl border border-slate-700/60 transition-all"
+              className="py-3 min-h-[48px] bg-slate-850 hover:bg-slate-800 active:scale-95 text-slate-400 hover:text-white flex items-center justify-center rounded-xl border border-slate-700/60 transition-all"
               title="Backspace"
             >
               <Delete className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Submit Action Button */}
           <div className="pt-2">
             <button
               type="button"
               onClick={handleSubmit}
               disabled={pin.length === 0}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-3.5 min-h-[48px] bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <span>Buka Terminal Kasir</span>
               <ArrowRight className="w-4 h-4" />
@@ -536,10 +533,9 @@ export default function LoginScreen() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="px-6 sm:px-8 py-3.5 border-t border-slate-800/80 bg-[#0d1322] flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
-        <div>Sistem Kasir Ritel Full-Stack &bull; Mode Keamanan Terminal</div>
-        <div className="font-mono text-slate-500">PT. SUMBER RETAIL NUSANTARA</div>
+      <footer className="px-4 sm:px-8 py-3 border-t border-slate-800/80 bg-[#0d1322] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-1 flex-shrink-0 text-center sm:text-left">
+        <div>Sistem Kasir Minimarket</div>
+        <div className="text-slate-500">Terminal Kasir</div>
       </footer>
 
       {/* QUICK REGISTER MODAL */}

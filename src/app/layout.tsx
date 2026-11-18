@@ -4,8 +4,8 @@ import { AuthProvider } from '@/context/AuthContext';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'INDO POS - Minimarket & Ritel',
-  description: 'Sistem Kasir Modern Minimarket & Ritel UMKM Indonesia',
+  title: 'Minimarket POS',
+  description: 'Aplikasi kasir minimarket dan toko kelontong',
 };
 
 export default function RootLayout({
