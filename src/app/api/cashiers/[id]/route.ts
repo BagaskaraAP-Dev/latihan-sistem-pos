@@ -14,7 +14,6 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, short_name, role, pin, avatar_url, code } = body;
 
     // Fetch existing
     const existingRes = await query('SELECT * FROM cashiers WHERE id = $1', [cashierId]);
@@ -23,12 +22,19 @@ export async function PUT(
     }
     const current = existingRes.rows[0];
 
-    const updatedCode = code ? code.trim().toUpperCase() : current.code;
-    const updatedName = name !== undefined ? name.trim() : current.name;
-    const updatedShortName = short_name !== undefined ? short_name.trim().toUpperCase() : current.short_name;
-    const updatedRole = role !== undefined ? (role === 'ADMIN' ? 'ADMIN' : 'KASIR') : current.role;
-    const updatedPin = pin !== undefined ? pin.trim() : current.pin;
-    const updatedAvatar = avatar_url !== undefined ? (avatar_url || null) : current.avatar_url;
+    const rawCode = body.code;
+    const rawName = body.name;
+    const rawShortName = body.short_name !== undefined ? body.short_name : body.shortName;
+    const rawRole = body.role;
+    const rawPin = body.pin;
+    const rawAvatar = body.avatar_url !== undefined ? body.avatar_url : body.avatarUrl;
+
+    const updatedCode = rawCode ? String(rawCode).trim().toUpperCase() : current.code;
+    const updatedName = rawName !== undefined ? String(rawName).trim() : current.name;
+    const updatedShortName = rawShortName !== undefined ? String(rawShortName).trim().toUpperCase() : current.short_name;
+    const updatedRole = rawRole !== undefined ? (rawRole === 'ADMIN' ? 'ADMIN' : 'KASIR') : current.role;
+    const updatedPin = rawPin !== undefined ? String(rawPin).trim() : current.pin;
+    const updatedAvatar = rawAvatar !== undefined ? (rawAvatar || null) : current.avatar_url;
 
     if (!updatedName) {
       return NextResponse.json({ error: 'Nama kasir tidak boleh kosong' }, { status: 400 });

@@ -17,11 +17,14 @@ import {
 } from 'lucide-react';
 
 export default function LoginScreen() {
-  const { users, login, addCashier } = useAuth();
+  const { users, login, addCashier, updateCashier } = useAuth();
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(users[0] || null);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState('');
+  const [photoFeedback, setPhotoFeedback] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const cardFileInputRef = useRef<HTMLInputElement>(null);
 
   // Quick Register Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -178,6 +181,75 @@ export default function LoginScreen() {
     reader.readAsDataURL(file);
   };
 
+  const handleCardPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedUser) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Format berkas harus berupa gambar (JPG, PNG, atau WEBP).');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setPhotoFeedback('Menyimpan foto profil...');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const maxDim = 300;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+          const res = await updateCashier(selectedUser.id, { avatarUrl: base64 });
+          if (res.success) {
+            setSelectedUser((prev) => (prev ? { ...prev, avatarUrl: base64 } : null));
+            setPhotoFeedback('Foto profil petugas berhasil diperbarui');
+            setTimeout(() => setPhotoFeedback(null), 3500);
+          } else {
+            setPhotoFeedback(res.error || 'Gagal menyimpan foto');
+            setTimeout(() => setPhotoFeedback(null), 4000);
+          }
+        } catch (err: any) {
+          setPhotoFeedback('Gagal memproses gambar');
+          setTimeout(() => setPhotoFeedback(null), 3000);
+        } finally {
+          setIsUploadingPhoto(false);
+          if (cardFileInputRef.current) cardFileInputRef.current.value = '';
+        }
+      };
+      img.onerror = () => {
+        setIsUploadingPhoto(false);
+        setPhotoFeedback('Gagal membaca gambar');
+        setTimeout(() => setPhotoFeedback(null), 3000);
+        if (cardFileInputRef.current) cardFileInputRef.current.value = '';
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmitNewUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalError(null);
@@ -309,15 +381,30 @@ export default function LoginScreen() {
                     </span>
 
                     {/* Avatar Thumbnail */}
-                    <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden mb-2 mt-1 shadow-inner">
-                      {u.avatarUrl ? (
-                        <img
-                          src={u.avatarUrl}
-                          alt={u.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-6 h-6 text-slate-400" />
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden mb-2 mt-1 shadow-inner">
+                        {u.avatarUrl ? (
+                          <img
+                            src={u.avatarUrl}
+                            alt={u.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-slate-400" />
+                        )}
+                      </div>
+                      {isSelected && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cardFileInputRef.current?.click();
+                          }}
+                          className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-md border-2 border-slate-900 transition-transform active:scale-90"
+                          title="Ganti Foto Profil Petugas Ini"
+                        >
+                          <Camera className="w-3 h-3" />
+                        </button>
                       )}
                     </div>
 
@@ -331,16 +418,43 @@ export default function LoginScreen() {
             </div>
           </div>
 
+          {/* Hidden File Input for Card Avatar Upload */}
+          <input
+            ref={cardFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCardPhotoUpload}
+            className="hidden"
+          />
+
           {/* PIN Input Dots & Status */}
           <div className="bg-[#0b101c] rounded-2xl p-4 border border-slate-800 flex flex-col items-center space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-              <KeyRound className="w-4 h-4 text-blue-400" />
-              <span>
-                PIN Keamanan untuk:{' '}
-                <span className="text-white font-extrabold">{selectedUser?.name || '-'}</span> (
-                {selectedUser?.code || '-'})
-              </span>
+            <div className="flex items-center justify-between w-full px-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                <KeyRound className="w-4 h-4 text-blue-400" />
+                <span>
+                  PIN Keamanan untuk:{' '}
+                  <span className="text-white font-extrabold">{selectedUser?.name || '-'}</span> (
+                  {selectedUser?.code || '-'})
+                </span>
+              </div>
+              <button
+                type="button"
+                disabled={isUploadingPhoto}
+                onClick={() => cardFileInputRef.current?.click()}
+                className="flex items-center gap-1 text-[11px] font-bold text-blue-400 hover:text-blue-300 underline disabled:opacity-50"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{isUploadingPhoto ? 'Menyimpan...' : 'Ganti Foto'}</span>
+              </button>
             </div>
+
+            {photoFeedback && (
+              <div className="text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>{photoFeedback}</span>
+              </div>
+            )}
 
             {/* PIN Bullets */}
             <div className="flex items-center gap-3 py-1">

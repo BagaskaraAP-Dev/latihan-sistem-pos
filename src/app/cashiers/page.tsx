@@ -144,6 +144,7 @@ export default function CashiersPage() {
     handleProcessImage(file, (base64) => {
       setFormData((prev) => ({ ...prev, avatarUrl: base64 }));
     });
+    if (e.target) e.target.value = '';
   };
 
   const handleInlinePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,6 +161,7 @@ export default function CashiersPage() {
       }
       setAvatarUploadTargetId(null);
     });
+    if (e.target) e.target.value = '';
   };
 
   const handleSubmitForm = async (e: React.FormEvent) => {

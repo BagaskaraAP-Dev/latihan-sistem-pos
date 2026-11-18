@@ -225,10 +225,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const addCashier = async (data: CashierInput): Promise<{ success: boolean; error?: string }> => {
     try {
+      const payload: any = {
+        ...data,
+        avatar_url: data.avatarUrl,
+        short_name: data.shortName,
+      };
       const res = await fetch('/api/cashiers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -250,10 +255,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     data: Partial<CashierInput>
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      const payload: any = { ...data };
+      if (data.avatarUrl !== undefined) {
+        payload.avatar_url = data.avatarUrl;
+      }
+      if (data.shortName !== undefined) {
+        payload.short_name = data.shortName;
+      }
+
       const res = await fetch(`/api/cashiers/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {

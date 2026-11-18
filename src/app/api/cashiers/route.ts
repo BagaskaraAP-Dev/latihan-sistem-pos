@@ -35,13 +35,18 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { code, name, short_name, role, pin, avatar_url } = body;
+    const rawCode = body.code;
+    const rawName = body.name;
+    const rawShortName = body.short_name !== undefined ? body.short_name : body.shortName;
+    const rawRole = body.role;
+    const rawPin = body.pin;
+    const rawAvatar = body.avatar_url !== undefined ? body.avatar_url : body.avatarUrl;
 
-    const trimmedCode = (code || '').trim().toUpperCase();
-    const trimmedName = (name || '').trim();
-    const trimmedShortName = (short_name || trimmedName.split(' ')[0] || trimmedCode).trim().toUpperCase();
-    const validRole = role === 'ADMIN' ? 'ADMIN' : 'KASIR';
-    const validPin = (pin || '1234').trim();
+    const trimmedCode = (rawCode || '').trim().toUpperCase();
+    const trimmedName = (rawName || '').trim();
+    const trimmedShortName = (rawShortName || trimmedName.split(' ')[0] || trimmedCode).trim().toUpperCase();
+    const validRole = rawRole === 'ADMIN' ? 'ADMIN' : 'KASIR';
+    const validPin = (rawPin || '1234').trim();
 
     if (!trimmedCode) {
       return NextResponse.json({ error: 'Kode kasir wajib diisi (contoh: KSR-01)' }, { status: 400 });
@@ -65,7 +70,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO cashiers (code, name, short_name, role, pin, avatar_url, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, NOW())
        RETURNING id, code, name, short_name, role, pin, avatar_url, created_at, updated_at`,
-      [trimmedCode, trimmedName, trimmedShortName, validRole, validPin, avatar_url || null]
+      [trimmedCode, trimmedName, trimmedShortName, validRole, validPin, rawAvatar || null]
     );
 
     return NextResponse.json(insertRes.rows[0], { status: 201 });

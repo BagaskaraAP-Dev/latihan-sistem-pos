@@ -14,6 +14,8 @@ export default function Navbar() {
   const [searchVal, setSearchVal] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [clockOutMessage, setClockOutMessage] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarFeedback, setAvatarFeedback] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -108,46 +110,81 @@ export default function Navbar() {
 
     if (!file.type.startsWith('image/')) {
       alert('Format file tidak didukung. Harap pilih gambar (JPG, PNG, atau WEBP).');
+      if (e.target) e.target.value = '';
       return;
     }
+
+    setIsUploadingAvatar(true);
+    setAvatarFeedback('Memproses foto...');
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => {
-        // Resize to 300x300 for crisp quality and minimal storage footprint
-        const canvas = document.createElement('canvas');
-        const maxDim = 300;
-        let width = img.width;
-        let height = img.height;
+      img.onload = async () => {
+        try {
+          // Resize to 300x300 for crisp quality and minimal storage footprint
+          const canvas = document.createElement('canvas');
+          const maxDim = 300;
+          let width = img.width;
+          let height = img.height;
 
-        if (width > height) {
-          if (width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
           }
-        } else {
-          if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+          const res = await updateAvatar(base64);
+          if (res.success) {
+            setAvatarFeedback('Foto profil berhasil diperbarui');
+            setTimeout(() => setAvatarFeedback(null), 3000);
+          } else {
+            setAvatarFeedback(res.error || 'Gagal menyimpan foto');
+            setTimeout(() => setAvatarFeedback(null), 4000);
           }
+        } catch (err: any) {
+          setAvatarFeedback(err.message || 'Gagal memproses gambar');
+          setTimeout(() => setAvatarFeedback(null), 4000);
+        } finally {
+          setIsUploadingAvatar(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        const base64 = canvas.toDataURL('image/jpeg', 0.85);
-        updateAvatar(base64);
+      };
+      img.onerror = () => {
+        setIsUploadingAvatar(false);
+        setAvatarFeedback('Gagal membaca berkas gambar');
+        setTimeout(() => setAvatarFeedback(null), 3000);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       };
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveAvatar = () => {
-    updateAvatar('');
+  const handleRemoveAvatar = async () => {
+    setIsUploadingAvatar(true);
+    setAvatarFeedback('Menghapus foto...');
+    const res = await updateAvatar('');
+    setIsUploadingAvatar(false);
+    if (res.success) {
+      setAvatarFeedback('Foto profil berhasil dihapus');
+      setTimeout(() => setAvatarFeedback(null), 3000);
+    } else {
+      setAvatarFeedback(res.error || 'Gagal menghapus foto');
+      setTimeout(() => setAvatarFeedback(null), 4000);
+    }
   };
 
   const handleClockOut = () => {
@@ -277,21 +314,29 @@ export default function Navbar() {
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     type="button"
+                    disabled={isUploadingAvatar}
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-bold underline"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-bold underline disabled:opacity-50"
                   >
-                    Ganti Foto Profil
+                    {isUploadingAvatar ? 'Mengunggah...' : 'Ganti Foto Profil'}
                   </button>
                   {currentUser?.avatarUrl && (
                     <button
                       type="button"
+                      disabled={isUploadingAvatar}
                       onClick={handleRemoveAvatar}
-                      className="text-xs text-rose-500 hover:text-rose-600 font-semibold"
+                      className="text-xs text-rose-500 hover:text-rose-600 font-semibold disabled:opacity-50"
                     >
                       Hapus
                     </button>
                   )}
                 </div>
+
+                {avatarFeedback && (
+                  <div className="mt-2 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 animate-in fade-in">
+                    {avatarFeedback}
+                  </div>
+                )}
 
                 <div className="mt-2">
                   <div className="flex items-center justify-center gap-1.5">
